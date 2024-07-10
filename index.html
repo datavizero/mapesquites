@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Interactivo</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 90vh; /* Ajustar la altura para dejar espacio para el botón */
+            width: 100%;
+        }
+        #controls {
+            height: 10vh; /* Altura del contenedor de controles */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="controls">
+        <button id="download-csv">Descargar CSV</button>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Inicializar el mapa centrado en México
+        var map = L.map('map').setView([23.6345, -102.5528], 5);
+
+        // Añadir capa de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Lista de ubicaciones cargadas
+        var locations = [];
+
+        // Cargar ubicaciones desde el backend
+        fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations')
+            .then(response => response.json())
+            .then(data => {
+                locations = data;
+                data.forEach((location, index) => {
+                    addMarker(location, index);
+                });
+            });
+
+        // Función para añadir marcador y manejar eventos
+        function addMarker(location, index) {
+            var marker = L.marker([location.lat, location.lng]).addTo(map)
+                .bindPopup(
+                    `<div>
+                        Latitud: ${location.lat}<br>
+                        Longitud: ${location.lng}<br>
+                        <button onclick="deleteMarker(${index})">Eliminar</button><br>
+                        <button onclick="saveMarker(${index})">Guardar</button>
+                    </div>`
+                )
+                .openPopup();
+        }
+
+        // Evento de doble clic
+        map.on('dblclick', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            var location = { lat: lat, lng: lng };
+
+            // Añadir marcador al mapa
+            addMarker(location, locations.length);
+
+            // Guardar la ubicación en el backend
+            fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(location)
+            }).then(response => response.json())
+              .then(data => {
+                  locations.push(data);
+                  console.log('Ubicaciones registradas:', locations);
+              });
+        });
+
+        // Función para eliminar marcador
+        function deleteMarker(index) {
+            fetch(`https://mapesquites-51a9dff5f52f.herokuapp.com/locations/${index}`, {
+                method: 'DELETE'
+            }).then(() => {
+                locations = locations.filter((_, i) => i !== index);
+                map.eachLayer(function(layer){
+                    if(layer instanceof L.Marker){
+                        map.removeLayer(layer);
+                    }
+                });
+                locations.forEach((location, i) => addMarker(location, i));
+            });
+        }
+
+        // Función para guardar marcador
+        function saveMarker(index) {
+            var location = locations[index];
+            fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(location)
+            }).then(response => response.json())
+              .then(data => {
+                  console.log('Ubicación guardada:', data);
+              });
+        }
+
+        // Evento para descargar CSV
+        document.getElementById('download-csv').addEventListener('click', function() {
+            window.location.href = 'https://mapesquites-51a9dff5f52f.herokuapp.com/download-csv';
+        });
+    </script>
+</body>
+</html>
