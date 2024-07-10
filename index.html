@@ -76,7 +76,7 @@
 
         // Crear un icono personalizado utilizando un archivo SVG
         var customIcon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/datavizero/mapesquites/main/corn-icon.svg?token=GHSAT0AAAAAACUTKC44WDPP4A66NPOPKYSAZUPFFBA',
+            iconUrl: 'https://raw.githubusercontent.com/datavizero/mapesquites/main/corn-icon.svg',
             iconSize: [32, 32], // Tamaño del icono
             iconAnchor: [16, 32], // Punto del icono que se ubicará en la coordenada del marcador
             popupAnchor: [0, -32] // Punto desde el cual se abrirá el popup relativo al icono
@@ -90,7 +90,7 @@
         }
 
         // Cargar y mostrar GeoJSON al cargar la página con el icono personalizado y popup
-        fetch('https://raw.githubusercontent.com/datavizero/mapesquites/main/esq_cdmx.geojson?token=GHSAT0AAAAAACUTKC44XBC46YFAKTUPXUAAZUPFEQQ')
+        fetch('https://raw.githubusercontent.com/datavizero/mapesquites/main/esq_cdmx.geojson')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
