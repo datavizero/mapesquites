@@ -7,37 +7,24 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         #map {
-            height: 90vh; /* Ajustar la altura para dejar espacio para el botón */
+            height: 100vh; /* Ajustar la altura para ocupar toda la pantalla */
             width: 100%;
-        }
-        #controls {
-            height: 10vh; /* Altura del contenedor de controles */
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
     </style>
 </head>
 <body>
     <div id="map"></div>
-    <div id="controls">
-        <button id="download-csv">Descargar CSV</button>
-    </div>
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // Inicializar el mapa centrado en México
-        var map = L.map('map').setView([23.6345, -102.5528], 5);
+        var map = L.map('map').setView([19.4326, -99.1332], 12); // Centrar en la Ciudad de México
 
-        // Añadir capa de OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Lista de ubicaciones cargadas
         var locations = [];
 
-        // Cargar ubicaciones desde el backend
         fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations')
             .then(response => response.json())
             .then(data => {
@@ -47,62 +34,34 @@
                 });
             });
 
-        // Función para añadir marcador y manejar eventos
         function addMarker(location, index) {
-            var marker = L.marker([location.lat, location.lng]).addTo(map)
+            var marker = L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map)
                 .bindPopup(
                     `<div>
                         Latitud: ${location.lat}<br>
                         Longitud: ${location.lng}<br>
-                        <button onclick="deleteMarker(${index})">Eliminar</button><br>
+                        <input type="text" id="name-${index}" placeholder="Nombre"><br>
                         <button onclick="saveMarker(${index})">Guardar</button>
                     </div>`
                 )
                 .openPopup();
         }
 
-        // Evento de doble clic
         map.on('dblclick', function(e) {
             var lat = e.latlng.lat;
             var lng = e.latlng.lng;
 
             var location = { lat: lat, lng: lng };
 
-            // Añadir marcador al mapa
             addMarker(location, locations.length);
 
-            // Guardar la ubicación en el backend
-            fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(location)
-            }).then(response => response.json())
-              .then(data => {
-                  locations.push(data);
-                  console.log('Ubicaciones registradas:', locations);
-              });
+            locations.push(location);
         });
 
-        // Función para eliminar marcador
-        function deleteMarker(index) {
-            fetch(`https://mapesquites-51a9dff5f52f.herokuapp.com/locations/${index}`, {
-                method: 'DELETE'
-            }).then(() => {
-                locations = locations.filter((_, i) => i !== index);
-                map.eachLayer(function(layer){
-                    if(layer instanceof L.Marker){
-                        map.removeLayer(layer);
-                    }
-                });
-                locations.forEach((location, i) => addMarker(location, i));
-            });
-        }
-
-        // Función para guardar marcador
         function saveMarker(index) {
             var location = locations[index];
+            var name = document.getElementById(`name-${index}`).value;
+            location.name = name;
             fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations', {
                 method: 'POST',
                 headers: {
@@ -115,10 +74,41 @@
               });
         }
 
-        // Evento para descargar CSV
-        document.getElementById('download-csv').addEventListener('click', function() {
-            window.location.href = 'https://mapesquites-51a9dff5f52f.herokuapp.com/download-csv';
+        // Crear un icono personalizado utilizando un archivo SVG
+        var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/datavizero/mapesquites/main/corn-icon.svg?token=GHSAT0AAAAAACUTKC45WV5GOMUBWQMTTPG6ZUPDK5A',
+            iconSize: [32, 32], // Tamaño del icono
+            iconAnchor: [16, 32], // Punto del icono que se ubicará en la coordenada del marcador
+            popupAnchor: [0, -32] // Punto desde el cual se abrirá el popup relativo al icono
         });
+
+        // Función para añadir popup con el campo 'name'
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                layer.bindPopup('Nombre: ' + feature.properties.name);
+            }
+        }
+
+        // Cargar y mostrar GeoJSON al cargar la página con el icono personalizado y popup
+        fetch('https://raw.githubusercontent.com/datavizero/mapesquites/main/esq_cdmx.geojson?token=GHSAT0AAAAAACUTKC44AQSNOUQFV5CLBPH4ZUPDJHQ')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('GeoJSON data loaded:', data); // Debug: Check if data is loaded
+                L.geoJSON(data, {
+                    pointToLayer: function (feature, latlng) {
+                        return L.marker(latlng, { icon: customIcon });
+                    },
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+            })
+            .catch(error => {
+                console.error('Error cargando el archivo GeoJSON:', error);
+            });
     </script>
 </body>
 </html>
