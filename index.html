@@ -5,10 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa Interactivo</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> <!-- Añadir Font Awesome -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- Añadir SweetAlert -->
     <style>
         #map {
             height: 100vh; /* Ajustar la altura para ocupar toda la pantalla */
             width: 100%;
+        }
+        .star-rating {
+            font-size: 1.5rem;
+            color: #ffd700;
+        }
+        .star-rating .fa-star {
+            cursor: pointer;
         }
     </style>
 </head>
@@ -39,10 +48,31 @@
                 .bindPopup(
                     `<div>
                         <input type="text" id="name-${index}" placeholder="Nombre"><br>
+                        <div class="star-rating" id="rating-${index}">
+                            <i class="fas fa-star" data-value="1"></i>
+                            <i class="fas fa-star" data-value="2"></i>
+                            <i class="fas fa-star" data-value="3"></i>
+                            <i class="fas fa-star" data-value="4"></i>
+                            <i class="fas fa-star" data-value="5"></i>
+                        </div>
                         <button onclick="saveMarker(${index})">Guardar</button>
                     </div>`
                 )
                 .openPopup();
+
+            // Añadir eventos a las estrellas
+            document.querySelectorAll(`#rating-${index} .fa-star`).forEach(star => {
+                star.addEventListener('click', function() {
+                    var rating = this.getAttribute('data-value');
+                    document.querySelectorAll(`#rating-${index} .fa-star`).forEach(s => {
+                        s.style.color = '#ddd';
+                    });
+                    for (var i = 1; i <= rating; i++) {
+                        document.querySelector(`#rating-${index} .fa-star[data-value="${i}"]`).style.color = '#ffd700';
+                    }
+                    document.querySelector(`#rating-${index}`).setAttribute('data-rating', rating);
+                });
+            });
         }
 
         map.on('dblclick', function(e) {
@@ -59,7 +89,9 @@
         function saveMarker(index) {
             var location = locations[index];
             var name = document.getElementById(`name-${index}`).value;
+            var rating = document.querySelector(`#rating-${index}`).getAttribute('data-rating') || 0;
             location.name = name;
+            location.rating = rating;
             fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations', {
                 method: 'POST',
                 headers: {
@@ -69,11 +101,21 @@
             }).then(response => response.json())
               .then(data => {
                   console.log('Ubicación guardada:', data);
-                  alert('Registro guardado exitosamente!');
+                  Swal.fire({
+                    title: 'Éxito',
+                    text: 'Registro guardado exitosamente!',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                  });
               })
               .catch(error => {
                   console.error('Error al guardar la ubicación:', error);
-                  alert('Hubo un error al guardar el registro.');
+                  Swal.fire({
+                    title: 'Error',
+                    text: 'Hubo un error al guardar el registro.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                  });
               });
         }
 
