@@ -82,8 +82,8 @@
 
         // Función para añadir popup con el campo 'name'
         function onEachFeature(feature, layer) {
-            if (feature.properties && feature.properties.name) {
-                layer.bindPopup('Nombre: ' + feature.properties.name);
+            if (feature.properties && feature.properties.Name) {
+                layer.bindPopup('Nombre: ' + feature.properties.Name);
             }
         }
 
