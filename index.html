@@ -69,6 +69,11 @@
             }).then(response => response.json())
               .then(data => {
                   console.log('Ubicación guardada:', data);
+                  alert('Registro guardado exitosamente!');
+              })
+              .catch(error => {
+                  console.error('Error al guardar la ubicación:', error);
+                  alert('Hubo un error al guardar el registro.');
               });
         }
 
@@ -82,8 +87,8 @@
 
         // Función para añadir popup con el campo 'name'
         function onEachFeature(feature, layer) {
-            if (feature.properties && feature.properties.Name) {
-                layer.bindPopup('Nombre: ' + feature.properties.Name);
+            if (feature.properties && feature.properties.name) {
+                layer.bindPopup('Nombre: ' + feature.properties.name);
             }
         }
 
