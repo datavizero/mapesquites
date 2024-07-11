@@ -44,16 +44,12 @@
             });
 
         function addMarker(location, index) {
-            var marker = L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map)
+            L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map)
                 .bindPopup(
                     `<div>
-                        <input type="text" id="name-${index}" placeholder="Nombre"><br>
+                        <input type="text" id="name-${index}" value="${location.name}" placeholder="Nombre"><br>
                         <div class="star-rating" id="rating-${index}">
-                            <i class="fas fa-star" data-value="1"></i>
-                            <i class="fas fa-star" data-value="2"></i>
-                            <i class="fas fa-star" data-value="3"></i>
-                            <i class="fas fa-star" data-value="4"></i>
-                            <i class="fas fa-star" data-value="5"></i>
+                            ${getStarRatingHTML(location.rating)}
                         </div>
                         <button onclick="saveMarker(${index})">Guardar</button>
                     </div>`
@@ -75,11 +71,19 @@
             });
         }
 
+        function getStarRatingHTML(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += `<i class="fas fa-star" data-value="${i}" style="color:${i <= rating ? '#ffd700' : '#ddd'}"></i>`;
+            }
+            return stars;
+        }
+
         map.on('dblclick', function(e) {
             var lat = e.latlng.lat;
             var lng = e.latlng.lng;
 
-            var location = { lat: lat, lng: lng };
+            var location = { lat: lat, lng: lng, name: '', rating: 0 };
 
             addMarker(location, locations.length);
 
@@ -135,7 +139,7 @@
         }
 
         // Cargar y mostrar GeoJSON al cargar la página con el icono personalizado y popup
-        fetch('https://raw.githubusercontent.com/datavizero/mapesquites/main/esq_cdmx.geojson')
+        fetch('https://raw.githubusercontent.com/datavizero/mapesquites/main/esq_nac.geojson')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
@@ -145,7 +149,7 @@
             .then(data => {
                 console.log('GeoJSON data loaded:', data); // Debug: Check if data is loaded
                 L.geoJSON(data, {
-                    pointToLayer: function (feature, latlng) {
+                    pointToLayer: function(feature, latlng) {
                         return L.marker(latlng, { icon: customIcon });
                     },
                     onEachFeature: onEachFeature
