@@ -38,8 +38,6 @@
             var marker = L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map)
                 .bindPopup(
                     `<div>
-                        Latitud: ${location.lat}<br>
-                        Longitud: ${location.lng}<br>
                         <input type="text" id="name-${index}" placeholder="Nombre"><br>
                         <button onclick="saveMarker(${index})">Guardar</button>
                     </div>`
@@ -84,8 +82,8 @@
 
         // Función para añadir popup con el campo 'name'
         function onEachFeature(feature, layer) {
-            if (feature.properties && feature.properties.Name) {
-                layer.bindPopup('Nombre: ' + feature.properties.Name);
+            if (feature.properties && feature.properties.name) {
+                layer.bindPopup('Nombre: ' + feature.properties.name);
             }
         }
 
