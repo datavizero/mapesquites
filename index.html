@@ -101,7 +101,12 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(location)
-            }).then(response => response.json())
+            }).then(response => {
+                if (!response.ok) {
+                    throw response;
+                }
+                return response.json();
+            })
               .then(data => {
                   console.log('Ubicación guardada:', data);
                   Swal.fire({
@@ -112,12 +117,13 @@
                   });
               })
               .catch(error => {
-                  console.error('Error al guardar la ubicación:', error);
-                  Swal.fire({
-                    title: 'Error',
-                    text: 'Hubo un error al guardar el registro.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
+                  error.json().then(errorMessage => {
+                      Swal.fire({
+                          title: 'Error',
+                          text: errorMessage.message || 'Hubo un error al guardar el registro.',
+                          icon: 'error',
+                          confirmButtonText: 'OK'
+                      });
                   });
               });
         }
@@ -135,7 +141,7 @@
             }
         }
 
-        fetch('https://raw.githubusercontent.com/datavizero/mapesquites/main/Compilado_1.geojson')
+        fetch('https://raw.githubusercontent.com/datavizero/mapesquites/main/Compilado_2.geojson')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
